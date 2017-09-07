@@ -1,4 +1,4 @@
-import expr
+from cognite import expr
 import numpy as np
 
 def forward(activations, weights):

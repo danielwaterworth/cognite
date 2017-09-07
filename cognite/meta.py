@@ -1,10 +1,11 @@
 import inspect
-import combinators
-import expr
 
-from linear import linear
-from add import add
-from relu import relu
+from cognite.linear import linear
+from cognite.add import add
+from cognite.relu import relu
+from cognite.squared_difference import squared_difference
+from cognite import combinators
+from cognite import expr
 
 class Function:
     def __init__(self, parameters, body):
