@@ -39,20 +39,20 @@ class Function:
                 )
             )
             scope = [scope_e for scope_e in scope if refs[scope_e] != 0]
+            print(scope)
 
         for e in exprs:
             if not isinstance(e, expr.Variable):
-                removals = set()
                 for child in e.children:
                     refs[child] -= 1
-                    if refs[child] == 0:
-                        removals.add(child)
 
                 if isinstance(e, expr.Apply):
                     mask = []
                     for scope_e in scope:
+                        # If the variable is going to be used again, duplicate
+                        # it
                         mask.append(
-                            scope_e in e.args and not scope_e in removals
+                            scope_e in e.args and refs[scope_e] != 0
                         )
 
                     if True in mask:
@@ -65,19 +65,24 @@ class Function:
                         scope = new_scope
 
                     indices = []
+                    new_scope = []
                     for arg in e.args:
                         indices.append(scope.index(arg))
+                        new_scope.append(arg)
 
                     for i, scope_e in enumerate(scope):
                         if not scope_e in e.args:
                             indices.append(i)
+                            new_scope.append(scope_e)
 
                     if sorted(indices) != indices:
+                        scope = new_scope
                         operations.append(
                             combinators.Permutation(
                                 *indices
                             )
                         )
+
                     n = len(scope) - len(e.args)
                     if n == 0:
                         operations.append(
@@ -95,7 +100,6 @@ class Function:
                 else:
                     raise NotImplementedError()
 
-                scope = [scope_e for scope_e in scope if not scope_e in removals]
                 scope = [e] + scope
 
         return combinators.Serial(*operations)
