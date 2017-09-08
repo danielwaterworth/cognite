@@ -1,13 +1,11 @@
 from cognite import expr
-import numpy as np
+import mxnet as mx
 
 def forward(x):
-    assert isinstance(x, np.ndarray)
-
     mask = x > 0
-    output = mask * x
+    output = mx.ndarray.multiply(mask, x)
     def backward(gradient):
-        return (gradient * mask,)
+        return (mx.ndarray.multiply(gradient, mask),)
     return output, backward
 
 def relu(x):

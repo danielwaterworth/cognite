@@ -142,6 +142,9 @@ class Permutation(Combinator):
     def __init__(self, *indices):
         assert list(sorted(indices)) == list(range(len(indices)))
         self.indices = indices
+        self.inverse = []
+        for i in range(len(self.indices)):
+            self.inverse.append(self.indices.index(i))
 
     @property
     def inputs(self):
@@ -157,7 +160,10 @@ class Permutation(Combinator):
         for index in self.indices:
             output.append(scope[index])
         def backward(*gradients):
-            raise NotImplementedError()
+            output = []
+            for i in self.inverse:
+                output.append(gradients[i])
+            return output
         return tuple(output), backward
 
     def __repr__(self):

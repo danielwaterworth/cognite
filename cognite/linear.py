@@ -1,11 +1,11 @@
 from cognite import expr
-import numpy as np
+import mxnet as mx
 
 def forward(activations, weights):
-    output = np.matmul(activations, weights)
+    output = mx.ndarray.dot(activations, weights)
     def backwards(gradients):
-        activation_gradients = np.matmul(gradients, weights)
-        weight_gradients = np.matmul(gradients, activations.T)
+        activation_gradients = mx.ndarray.dot(gradients, weights.T)
+        weight_gradients = mx.ndarray.dot(activations.T, gradients)
         return (activation_gradients, weight_gradients)
     return output, backwards
 

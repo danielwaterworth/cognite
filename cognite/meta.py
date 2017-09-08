@@ -105,6 +105,6 @@ class Function:
         return combinators.Serial(*operations)
 
 def differentiable_function(f):
-    args, _, _, _ = inspect.getargspec(f)
-    symbolic_args = list(map(expr.Variable, args))
+    signature = inspect.signature(f)
+    symbolic_args = list(map(expr.Variable, signature.parameters))
     return Function(symbolic_args, f(*symbolic_args)).transform()

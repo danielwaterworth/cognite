@@ -1,8 +1,8 @@
 from cognite import expr
-import numpy as np
+import mxnet as mx
 
 def forward(activations, biases):
-    output = activations + biases
+    output = mx.ndarray.add(activations, biases)
     def backward(gradients):
         return (gradients, gradients)
     return output, backward
