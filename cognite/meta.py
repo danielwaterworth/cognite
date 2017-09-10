@@ -4,6 +4,7 @@ from cognite.add import add
 from cognite.concat import concat
 from cognite.linear import linear
 from cognite.relu import relu
+from cognite.reshape import reshape
 from cognite.squared_difference import squared_difference
 from cognite.upsample import upsample
 from cognite import combinators
