@@ -1,7 +1,8 @@
 import inspect
 
-from cognite.linear import linear
 from cognite.add import add
+from cognite.concat import concat
+from cognite.linear import linear
 from cognite.relu import relu
 from cognite.squared_difference import squared_difference
 from cognite import combinators
