@@ -35,15 +35,6 @@ class Apply(Expr):
     def children(self):
         return self.args
 
-    def replace(self, replacements):
-        new_args = [arg.replace(replacements) for arg in self.args]
-        if new_args == self.args:
-            return self
-        elif all([isinstance(arg, Constant) for arg in new_args]):
-            return Constant(self.function.forward([arg.value for arg in new_args])[0])
-        else:
-            return Apply(self.function, new_args)
-
     def get_shape(self):
         return self.function.get_output_shape(args)
 
@@ -56,9 +47,6 @@ class Apply(Expr):
 class Constant(Expr):
     def __init__(self, value):
         self.value = value
-
-    def replace(self, replacements):
-        return self
 
     @property
     def children(self):
@@ -83,16 +71,15 @@ class Variable(Expr):
     def children(self):
         return []
 
-    def replace(self, replacements):
-        return replacements.get(self, self)
-
-    def __getitem__(self, name):
+    def __getitem__(self, attr):
         assert not self.shape
-        descendent = self.descendents.get(name)
+        descendent = self.descendents.get(attr)
         if descendent:
             return descendent
-        descendent = Variable('%s[%s]' % (self.name, repr(name)))
-        self.descendents[name] = descendent
+
+        name = '%s[%s]' % (self.name, repr(attr))
+        descendent = Index(self, attr, name)
+        self.descendents[attr] = descendent
         return descendent
 
     def get_shape(self):
@@ -108,6 +95,46 @@ class Variable(Expr):
                 raise ShapeError(
                     'Shape mismatch, %s cannot be both %s and %s' % (self.name, self.shape, shape)
                 )
+        else:
+            self.shape = shape
+
+    def __repr__(self):
+        return self.name
+
+class Index(Expr):
+    def __init__(self, value, attr, name, shape=None, descendents=None):
+        self.value = value
+        self.attr = attr
+        self.name = name
+        self.shape = shape
+        self.descendents = descendents or {}
+
+    @property
+    def children(self):
+        return [self.value]
+
+    def __getitem__(self, attr):
+        assert not self.shape
+        descendent = self.descendents.get(attr)
+        if descendent:
+            return descendent
+
+        name = '%s[%s]' % (self.name, repr(attr))
+        descendent = Index(self, attr, name)
+        self.descendents[attr] = descendent
+        return descendent
+
+    def get_shape(self):
+        if self.shape:
+            return self.shape
+        else:
+            raise ShapeError('Shape not fixed for %s' % self.name)
+
+    def assert_shape(self, shape):
+        assert not self.descendents
+        if self.shape:
+            if self.shape != shape:
+                raise ShapeError('Shape mismatch, %s cannot be both %s and %s' % (self.name, self.shape, shape))
         else:
             self.shape = shape
 

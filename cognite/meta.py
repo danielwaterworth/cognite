@@ -15,15 +15,6 @@ class Function:
         self.parameters = parameters
         self.body = body
 
-    def __call__(self, *args):
-        def f(x):
-            if isinstance(x, expr.Expr):
-                return x
-            else:
-                return expr.Constant(x)
-        args = map(f, args)
-        return self.body.replace(dict(zip(self.parameters, args)))
-
     def __repr__(self):
         return "Function(%s, %s)" % (repr(self.parameters), repr(self.body))
 
