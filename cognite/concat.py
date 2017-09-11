@@ -1,8 +1,11 @@
 from cognite import expr
 import mxnet as mx
 
-def concat_fn(axis):
-    def forward(args):
+class Concat(expr.Function):
+    def __init__(self, axis):
+        self.axis = axis
+
+    def forward(self, args):
         output = mx.ndarray.concat(args, dim=axis)
         def backwards(gradients):
             outputs = []
@@ -22,10 +25,12 @@ def concat_fn(axis):
                 )
             return outputs
         return output, backwards
-    return forward
+
+    def get_output_shape(self, args):
+        raise NotImplementedError()
 
 def concat(args, axis):
     if all(lambda x: isinstance(expr.Constant), args):
-        return expr.Constant(concat_fn(axis)(map(lambda x: x.value, args)))
+        return expr.Constant(Concat(axis).forward(map(lambda x: x.value, args)))
     else:
-        return expr.Apply(expr.Function('concat', concat_fn(axis)), [args])
+        return expr.Apply(Concat(axis), [args])

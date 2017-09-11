@@ -43,13 +43,29 @@ def convolution_weight_gradient(delta, activations):
         )
     return mx.ndarray.transpose(weight_gradient, axes=(2, 3, 0, 1))
 
-def forward(activations, weights):
-    output = convolution(activations, weights)
-    def backwards(gradients):
-        activation_gradients = convolution_input_gradient(gradients, weights)
-        weight_gradients = convolution_weight_gradient(gradients, activations)
-        return (activation_gradients, weight_gradients)
-    return output, backwards
+class Convolution(expr.Function):
+    def __init__(self, kernel, outputs):
+        self.kernel = kernel
+        self.outputs = outputs
+
+    def forward(self, args):
+        activations, weights = args
+        output = convolution(activations, weights)
+        def backwards(gradients):
+            activation_gradients = convolution_input_gradient(gradients, weights)
+            weight_gradients = convolution_weight_gradient(gradients, activations)
+            return (activation_gradients, weight_gradients)
+        return output, backwards
+
+    def get_output_shape(self, args):
+        activations, weights = args
+        act_shape = activations.get_shape()
+        if len(act_shape) != 4:
+            raise expr.ShapeError('expected activations to be 4D, DHWC')
+        batch, height, width, in_channels = activations.shape
+        filter_height, filter_width = self.kernel
+        weights.assert_shape((filter_height, filter_width, self.outputs, in_channels))
+        return (batch, height - filter_height + 1, width - filter_width + 1, self.outputs)
 
 def convolution2d(x, weights):
     if isinstance(x, expr.Constant) and isinstance(weights, expr.Constant):
