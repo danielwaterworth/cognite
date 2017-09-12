@@ -1,4 +1,5 @@
 import collections
+import mxnet as mx
 
 class ShapeError(Exception):
     pass
@@ -36,7 +37,7 @@ class Apply(Expr):
         return self.args
 
     def get_shape(self):
-        return self.function.get_output_shape(args)
+        return self.function.get_output_shape(self.args)
 
     def assert_shape(self, shape):
         self.function.assert_output_shape(self.args, shape)
@@ -64,8 +65,8 @@ class Constant(Expr):
 class Variable(Expr):
     def __init__(self, name):
         self.name = name
-        self.descendents = {}
         self.shape = None
+        self.descendents = {}
 
     @property
     def children(self):
@@ -100,6 +101,15 @@ class Variable(Expr):
 
     def __repr__(self):
         return self.name
+
+    def instantiate(self):
+        if self.shape:
+            raise NotImplementedError()
+        else:
+            output = {}
+            for attr, descendent in self.descendents.items():
+                output[attr] = descendent.instantiate()
+            return output
 
 class Index(Expr):
     def __init__(self, value, attr, name, shape=None, descendents=None):
@@ -141,13 +151,22 @@ class Index(Expr):
     def __repr__(self):
         return self.name
 
+    def instantiate(self):
+        if self.shape:
+            return mx.ndarray.random_normal(shape=self.shape)
+        else:
+            output = {}
+            for attr, descendent in self.descendents.items():
+                output[attr] = descendent.instantiate()
+            return output
+
 def topological_sort(root):
     exprs = []
-    stack = [root]
-    while stack:
-        x = stack.pop()
+    queue = collections.deque([root])
+    while queue:
+        x = queue.popleft()
         if not x in exprs:
-            stack.extend(x.children)
+            queue.extend(x.children)
             exprs.append(x)
     exprs.reverse()
     return exprs

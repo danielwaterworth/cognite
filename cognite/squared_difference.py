@@ -29,10 +29,10 @@ class SquaredDifference(expr.Function):
         a.assert_shape(shape)
         return shape
 
-squared_difference = SquaredDifference()
+squared_difference_fn = SquaredDifference()
 
 def squared_difference(x, weights):
     if isinstance(x, expr.Constant) and isinstance(weights, expr.Constant):
-        return expr.Constant(squared_difference.forward([x.value, weights.value])[0])
+        return expr.Constant(squared_difference_fn.forward([x.value, weights.value])[0])
     else:
-        return expr.Apply(squared_difference, [x, weights])
+        return expr.Apply(squared_difference_fn, [x, weights])

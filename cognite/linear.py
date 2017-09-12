@@ -11,6 +11,27 @@ class Linear(expr.Function):
             return (activation_gradients, weight_gradients)
         return output, backwards
 
+    def assert_output_shape(self, args, shape):
+        activations, weights = args
+        batch, output_size = shape
+
+        try:
+            act_shape = activations.get_shape()
+        except expr.ShapeError:
+            pass
+        else:
+            batch2, input_size = act_shape
+            if batch != batch2:
+                raise expr.ShapeError('Shape mismatch')
+            weights.assert_shape((input_size, output_size))
+            return None
+
+        weight_shape = weights.get_shape()
+        input_size, output_size2 = weight_shape
+        if output_size2 != output_size:
+            raise expr.ShapeError('Shape mismatch')
+        activations.assert_shape((batch, input_size))
+
     def get_output_shape(self, args):
         activations, weights = args
         act_shape = activations.get_shape()

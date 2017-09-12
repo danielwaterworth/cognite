@@ -1,3 +1,6 @@
+import mxnet as mx
+from cognite import data
+
 class Combinator:
     pass
 
@@ -77,6 +80,7 @@ class Parallel(Combinator):
             outputs = []
             for back, x in zip(backs, self.xs):
                 output = back(*gradients[:x.outputs])
+                assert all(map(data.check, output)), repr(output)
                 outputs.append(output)
                 gradients = gradients[x.outputs:]
             assert len(scope) == 0
@@ -93,50 +97,36 @@ class Discard(Combinator):
 
     @property
     def inputs(self):
-        return len(self.mask)
+        return 1
 
     @property
     def outputs(self):
-        return len(filter(lambda x: not x, self.mask))
+        return 0
 
-    def __call__(self, *scope):
-        assert len(scope) == len(self.mask)
-        output = []
-        for m, x in zip(self.mask, scope):
-            if not m:
-                output.append(x)
-        def backward(*gradients):
-            raise NotImplementedError()
-        return tuple(output), backward
+    def __call__(self, x):
+        def backward():
+            return data.zeros(x.shape)
+        return (), backward
 
     def __repr__(self):
         return "Discard(%s)" % (', '.join(map(repr, self.mask)))
 
 class Duplicate(Combinator):
-    def __init__(self, *mask):
-        self.mask = mask
-
     @property
     def inputs(self):
-        return len(self.mask)
+        return 1
 
     @property
     def outputs(self):
-        return len(self.mask) + len(filter(lambda x: x, self.mask))
+        return 2
 
-    def __call__(self, *scope):
-        assert len(scope) == len(self.mask)
-        output = []
-        for m, x in zip(self.mask, scope):
-            output.append(x)
-            if m:
-                output.append(x)
-        def backward(*gradients):
-            raise NotImplementedError()
-        return tuple(output), backward
+    def __call__(self, x):
+        def backward(a, b):
+            return (data.add(a, b),)
+        return (x, x), backward
 
     def __repr__(self):
-        return "Duplicate(%s)" % (', '.join(map(repr, self.mask)))
+        return "Duplicate()"
 
 class Permutation(Combinator):
     def __init__(self, *indices):
@@ -163,7 +153,7 @@ class Permutation(Combinator):
             output = []
             for i in self.inverse:
                 output.append(gradients[i])
-            return output
+            return tuple(output)
         return tuple(output), backward
 
     def __repr__(self):
@@ -184,8 +174,48 @@ class Apply(Combinator):
 
     def __call__(self, *scope):
         assert len(scope) == self.n
-        output, back = self.function(*scope)
+        output, back = self.function.forward(scope)
         return (output,), back
 
     def __repr__(self):
         return "Apply(%s, %d)" % (repr(self.function), self.n)
+
+class Index(Combinator):
+    def __init__(self, attr):
+        self.attr = attr
+
+    @property
+    def inputs(self):
+        return 1
+
+    @property
+    def outputs(self):
+        return 1
+
+    def __call__(self, value):
+        def back(gradients):
+            return ({self.attr: gradients},)
+        return (value[self.attr],), back
+
+    def __repr__(self):
+        return "Index(%s)" % self.attr
+
+class Constant(Combinator):
+    def __init__(self, value):
+        self.value = value
+
+    @property
+    def inputs(self):
+        return 0
+
+    @property
+    def outputs(self):
+        return 1
+
+    def __call__(self):
+        def back(gradients):
+            return ()
+        return (self.value,), back
+
+    def __repr__(self):
+        return "Constant()"

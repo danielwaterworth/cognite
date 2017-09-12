@@ -68,6 +68,7 @@ class Convolution(expr.Function):
         return (batch, height - filter_height + 1, width - filter_width + 1, self.outputs)
 
 def convolution2d(x, weights):
+    assert False
     if isinstance(x, expr.Constant) and isinstance(weights, expr.Constant):
         return expr.Constant(forward(x.value, weights.value)[0])
     else:

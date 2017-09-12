@@ -14,9 +14,13 @@ class Function:
     def __init__(self, parameters, body):
         self.parameters = parameters
         self.body = body
+        self.transform()
 
     def __repr__(self):
         return "Function(%s, %s)" % (repr(self.parameters), repr(self.body))
+
+    def __call__(self, *args):
+        return self.transformed(*args)
 
     def transform(self):
         exprs = expr.topological_sort(self.body)
@@ -33,7 +37,6 @@ class Function:
                 )
             )
             scope = [scope_e for scope_e in scope if refs[scope_e] != 0]
-            print(scope)
 
         for e in exprs:
             if not isinstance(e, expr.Variable):
@@ -41,22 +44,24 @@ class Function:
                     refs[child] -= 1
 
                 if isinstance(e, expr.Apply):
-                    mask = []
+                    ops = []
+                    new_scope = []
+                    n = 0
                     for scope_e in scope:
-                        # If the variable is going to be used again, duplicate
-                        # it
-                        mask.append(
-                            scope_e in e.args and refs[scope_e] != 0
-                        )
-
-                    if True in mask:
-                        operations.append(combinators.Duplicate(*mask))
-                        new_scope = []
-                        for scope_e, dup in zip(scope, mask):
+                        new_scope.append(scope_e)
+                        if refs[scope_e] != 0 and scope_e in e.args:
                             new_scope.append(scope_e)
-                            if dup:
-                                new_scope.append(scope_e)
-                        scope = new_scope
+                            if n != 0:
+                                ops.append(combinators.Identity(n))
+                                n = 0
+                            ops.append(combinators.Duplicate())
+                        else:
+                            n += 1
+                    ops.append(combinators.Identity(n))
+                    operations.append(
+                        combinators.Parallel(*ops)
+                    )
+                    scope = new_scope
 
                     indices = []
                     new_scope = []
@@ -64,10 +69,10 @@ class Function:
                         indices.append(scope.index(arg))
                         new_scope.append(arg)
 
-                    for i, scope_e in enumerate(scope):
-                        if not scope_e in e.args:
+                    for i in range(len(scope)):
+                        if not i in indices:
                             indices.append(i)
-                            new_scope.append(scope_e)
+                            new_scope.append(scope[i])
 
                     if sorted(indices) != indices:
                         scope = new_scope
@@ -91,14 +96,52 @@ class Function:
                             )
                         )
                         scope = scope[len(e.args):]
+                    scope = [e] + scope
+                elif isinstance(e, expr.Constant):
+                    operations.append(
+                        combinators.Parallel(
+                            combinators.Identity(len(scope)),
+                            combinators.Constant(e.value),
+                        )
+                    )
+                    scope.append(e)
+                elif isinstance(e, expr.Index):
+                    n = scope.index(e.value)
+                    before = n
+                    after = len(scope) - before - 1
+                    if refs[e.value] != 0:
+                        operations.append(
+                            combinators.Parallel(
+                                combinators.Identity(before),
+                                combinators.Serial(
+                                    combinators.Duplicate(),
+                                    combinators.Parallel(
+                                        combinators.Index(e.attr),
+                                        combinators.Identity(1),
+                                    )
+                                ),
+                                combinators.Identity(after),
+                            )
+                        )
+                        scope = scope[:n] + [e] + scope[n:]
+                    else:
+                        operations.append(
+                            combinators.Parallel(
+                                combinators.Identity(before),
+                                combinators.Index(e.attr),
+                                combinators.Identity(after),
+                            )
+                        )
+                        scope = scope[:n] + [e] + scope[n+1:]
                 else:
                     raise NotImplementedError()
 
-                scope = [e] + scope
-
-        return combinators.Serial(*operations)
+        self.transformed = combinators.Serial(*operations)
 
 def differentiable_function(f):
     signature = inspect.signature(f)
     symbolic_args = list(map(expr.Variable, signature.parameters))
-    return Function(symbolic_args, f(*symbolic_args)).transform()
+    body = f(*symbolic_args)
+    # We expect the output shape to be known
+    body.get_shape()
+    return Function(symbolic_args, body)

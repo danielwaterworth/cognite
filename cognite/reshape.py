@@ -30,4 +30,4 @@ def reshape(values, new_shape):
     if isinstance(values, expr.Constant):
         return expr.Constant(Reshape(new_shape).forward([values.value]))
     else:
-        return expr.Apply(Reshape(new_shape)), [values])
+        return expr.Apply(Reshape(new_shape), [values])
