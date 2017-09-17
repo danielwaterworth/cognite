@@ -1,6 +1,7 @@
 import inspect
 
 from cognite.add import add
+from cognite.add_biases import add_biases
 from cognite.broadcast import broadcast
 from cognite.concat import concat
 from cognite.linear import linear

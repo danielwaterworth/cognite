@@ -1,3 +1,4 @@
+import toposort
 import collections
 import mxnet as mx
 
@@ -161,15 +162,15 @@ class Index(Expr):
             return output
 
 def topological_sort(root):
-    exprs = []
-    queue = collections.deque([root])
-    while queue:
-        x = queue.popleft()
-        if not x in exprs:
-            queue.extend(x.children)
-            exprs.append(x)
-    exprs.reverse()
-    return exprs
+    connections = {}
+    stack = [root]
+    while stack:
+        x = stack.pop()
+        if not x in connections:
+            connections[x] = set(x.children)
+            stack.extend(x.children)
+    output = list(toposort.toposort(connections))
+    return [x for xs in output for x in xs]
 
 def count_references(exprs):
     refs = collections.Counter()

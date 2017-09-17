@@ -67,9 +67,9 @@ class Convolution(expr.Function):
         weights.assert_shape((filter_height, filter_width, self.outputs, in_channels))
         return (batch, height - filter_height + 1, width - filter_width + 1, self.outputs)
 
-def convolution2d(x, weights):
-    assert False
+def convolution2d(x, weights, kernel, outputs):
+    conv = Convolution(kernel, outputs)
     if isinstance(x, expr.Constant) and isinstance(weights, expr.Constant):
-        return expr.Constant(forward(x.value, weights.value)[0])
+        return expr.Constant(conv.forward([x.value, weights.value])[0])
     else:
-        return expr.Apply(expr.Function('convolution2d', forward), [x, weights])
+        return expr.Apply(conv, [x, weights])

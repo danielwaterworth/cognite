@@ -12,5 +12,5 @@ setup(
     packages=['cognite'],
     long_description="",
     classifiers=[],
-    install_requires=['mxnet', 'numpy'],
+    install_requires=['mxnet', 'numpy', 'toposort'],
 )
