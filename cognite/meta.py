@@ -4,6 +4,7 @@ from cognite.add import add
 from cognite.add_biases import add_biases
 from cognite.broadcast import broadcast
 from cognite.concat import concat
+from cognite.convolution import convolution2d
 from cognite.linear import linear
 from cognite.relu import relu
 from cognite.reshape import reshape
