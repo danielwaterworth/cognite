@@ -28,6 +28,9 @@ class Expr:
     def assert_shape(self):
         raise NotImplementedError()
 
+    def set_initializer(self, initializer):
+        pass
+
 class Apply(Expr):
     def __init__(self, function, args):
         self.function = function
@@ -67,11 +70,15 @@ class Variable(Expr):
     def __init__(self, name):
         self.name = name
         self.shape = None
+        self.initializer = None
         self.descendents = {}
 
     @property
     def children(self):
         return []
+
+    def set_initializer(self, initializer):
+        self.initializer = initializer
 
     def __getitem__(self, attr):
         assert not self.shape
@@ -105,24 +112,32 @@ class Variable(Expr):
 
     def instantiate(self):
         if self.shape:
-            raise NotImplementedError()
-        else:
+            if not self.initializer:
+                raise Exception("Initializer not set for %s" % self.name)
+            return self.initializer()
+        elif self.descendents:
             output = {}
             for attr, descendent in self.descendents.items():
                 output[attr] = descendent.instantiate()
             return output
+        else:
+            raise ShapeError("Shape not set for %s" % self.name)
 
 class Index(Expr):
-    def __init__(self, value, attr, name, shape=None, descendents=None):
+    def __init__(self, value, attr, name):
         self.value = value
         self.attr = attr
         self.name = name
-        self.shape = shape
-        self.descendents = descendents or {}
+        self.initializer = None
+        self.shape = None
+        self.descendents = {}
 
     @property
     def children(self):
         return [self.value]
+
+    def set_initializer(self, initializer):
+        self.initializer = initializer
 
     def __getitem__(self, attr):
         assert not self.shape
@@ -154,12 +169,16 @@ class Index(Expr):
 
     def instantiate(self):
         if self.shape:
-            return mx.ndarray.random_normal(shape=self.shape)
-        else:
+            if not self.initializer:
+                raise Exception("Initializer not set for %s %d" % (self.name, id(self)))
+            return self.initializer()
+        elif self.descendents:
             output = {}
             for attr, descendent in self.descendents.items():
                 output[attr] = descendent.instantiate()
             return output
+        else:
+            raise ShapeError("Shape not set for %s" % self.name)
 
 def topological_sort(root):
     connections = {}

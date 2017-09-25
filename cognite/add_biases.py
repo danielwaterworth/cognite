@@ -15,12 +15,16 @@ class AddBiases(expr.Function):
     def assert_output_shape(self, args, shape):
         a, b = args
         a.assert_shape(shape)
-        b.assert_shape((shape[-1],))
+        biases_shape = (shape[-1],)
+        b.assert_shape(biases_shape)
+        b.set_initializer(lambda : mx.nd.zeros(biases_shape))
 
     def get_output_shape(self, args):
         a, b = args
         shape = a.get_shape()
-        b.assert_shape((shape[-1],))
+        biases_shape = (shape[-1],)
+        b.assert_shape(biases_shape)
+        b.set_initializer(lambda : mx.nd.zeros(biases_shape))
         return shape
 
 add_biases_fn = AddBiases()

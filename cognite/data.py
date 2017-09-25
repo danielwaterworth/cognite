@@ -3,7 +3,16 @@ import mxnet as mx
 import operator
 import struct
 
-def elementwise(a, b, fn):
+def unary_elementwise(x, fn):
+    if isinstance(x, dict):
+        output = {}
+        for key, value in x.items():
+            output[key] = unary_elementwise(value, fn)
+        return output
+    else:
+        return fn(x)
+
+def binary_elementwise(a, b, fn):
     assert (isinstance(a, dict) and isinstance(b, dict)) or (isinstance(a, mx.ndarray.NDArray) and isinstance(b, mx.ndarray.NDArray))
     if isinstance(a, dict):
         a_keys = set(a.keys())
@@ -14,19 +23,34 @@ def elementwise(a, b, fn):
         for key in b_keys - a_keys:
             output[key] = b[key]
         for key in a_keys & b_keys:
-            output[key] = elementwise(a[key], b[key], fn)
+            output[key] = binary_elementwise(a[key], b[key], fn)
         return output
     else:
         return fn(a, b)
 
 def add(a, b):
-    return elementwise(a, b, mx.ndarray.add)
+    return binary_elementwise(a, b, mx.ndarray.add)
 
 def subtract(a, b):
-    return elementwise(a, b, mx.ndarray.subtract)
+    return binary_elementwise(a, b, mx.ndarray.subtract)
 
 def multiply(a, b):
-    return elementwise(a, b, mx.ndarray.multiply)
+    return binary_elementwise(a, b, mx.ndarray.multiply)
+
+def divide(a, b):
+    return binary_elementwise(a, b, mx.ndarray.divide)
+
+def square(x):
+    return unary_elementwise(x, mx.ndarray.square)
+
+def sqrt(x):
+    return unary_elementwise(x, mx.ndarray.sqrt)
+
+def add_scalar(scalar, x):
+    return unary_elementwise(x, lambda x: mx.ndarray.add(scalar, x))
+
+def multiply_scalar(scalar, x):
+    return unary_elementwise(x, lambda x: mx.ndarray.multiply(scalar, x))
 
 def zeros(shape):
     if isinstance(shape, dict):

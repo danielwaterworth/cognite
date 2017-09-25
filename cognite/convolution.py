@@ -1,4 +1,5 @@
 from cognite import expr
+import math
 import mxnet as mx
 
 def convolution(activations, weight):
@@ -64,7 +65,12 @@ class Convolution(expr.Function):
             raise expr.ShapeError('expected activations to be 4D, DHWC')
         batch, height, width, in_channels = activations.shape
         filter_height, filter_width = self.kernel
-        weights.assert_shape((filter_height, filter_width, in_channels, self.outputs))
+        weight_shape = (filter_height, filter_width, in_channels, self.outputs)
+        weights.assert_shape(weight_shape)
+        scale = 1/math.sqrt(self.outputs*filter_height*filter_width)
+        initializer = \
+            lambda : mx.nd.random_normal(scale=scale, shape=weight_shape)
+        weights.set_initializer(initializer)
         return (batch, height - filter_height + 1, width - filter_width + 1, self.outputs)
 
 def convolution2d(x, weights, kernel, outputs):
