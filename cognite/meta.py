@@ -9,6 +9,8 @@ from cognite.linear import linear
 from cognite.relu import relu
 from cognite.reshape import reshape
 from cognite.squared_difference import squared_difference
+from cognite.softmax import softmax
+from cognite.softmax_cross_entropy import softmax_cross_entropy
 from cognite.upsample import upsample
 from cognite import combinators
 from cognite import expr

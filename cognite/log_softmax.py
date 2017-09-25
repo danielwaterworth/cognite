@@ -1,13 +1,15 @@
 from cognite import expr
 import mxnet as mx
 
-class Add(expr.Function):
+class SoftmaxCrossEntropy(expr.Function):
     def forward(self, args):
-        activations, biases = args
+        x, labels = args
 
-        output = mx.ndarray.add(activations, biases)
         def backward(gradients):
-            return (gradients, gradients)
+            t = mx.ndarray.softmax(x)
+            return mx.ndarray.multiply(gradients, mx.ndarray.subtract(t, labels))
+
+        output = mx.ndarray.softmax_cross_entropy(x, labels)
         return output, backward
 
     def assert_output_shape(self, args, shape):
@@ -29,10 +31,10 @@ class Add(expr.Function):
         a.assert_shape(shape)
         return shape
 
-add_fn = Add()
+softmax_cross_entropy_fn = SoftmaxCrossEntropy()
 
-def add(x, biases):
-    if isinstance(x, expr.Constant) and isinstance(biases, expr.Constant):
-        return expr.Constant(add_fn.forward([x.value, biases.value])[0])
+def softmax_cross_entropy(x, labels):
+    if isinstance(x, expr.Constant) and isinstance(labels, expr.Constant):
+        return expr.Constant(softmax_cross_entropy_fn.forward([x.value, labels.value])[0])
     else:
-        return expr.Apply(add_fn, [x, biases])
+        return expr.Apply(softmax_cross_entropy_fn, [x, labels])
