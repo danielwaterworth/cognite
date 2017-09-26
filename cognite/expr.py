@@ -7,7 +7,7 @@ class ShapeError(Exception):
 
 class Function:
     def forward(self, args):
-        raise NotImplementedError()
+        raise NotImplementedError("not implemented for %s" % repr(type(self)))
 
     def assert_output_shape(self, args, shape):
         output_shape = self.get_output_shape(args)
@@ -15,18 +15,18 @@ class Function:
             raise expr.ShapeError('Expected %s, but got %s' % (shape, output_shape))
 
     def get_output_shape(self, args):
-        raise NotImplementedError()
+        raise NotImplementedError("not implemented for %s" % repr(type(self)))
 
 class Expr:
     @property
     def children(self):
-        raise NotImplementedError()
+        raise NotImplementedError("not implemented for %s" % repr(type(self)))
 
     def get_shape(self):
-        raise NotImplementedError()
+        raise NotImplementedError("not implemented for %s" % repr(type(self)))
 
     def assert_shape(self):
-        raise NotImplementedError()
+        raise NotImplementedError("not implemented for %s" % repr(type(self)))
 
     def set_initializer(self, initializer):
         pass

@@ -92,9 +92,6 @@ class Parallel(Combinator):
         return "Parallel(%s)" % (', '.join(map(repr, self.xs)))
 
 class Discard(Combinator):
-    def __init__(self, *mask):
-        self.mask = mask
-
     @property
     def inputs(self):
         return 1
@@ -107,9 +104,6 @@ class Discard(Combinator):
         def backward():
             return data.zeros(x.shape)
         return (), backward
-
-    def __repr__(self):
-        return "Discard(%s)" % (', '.join(map(repr, self.mask)))
 
 class Duplicate(Combinator):
     @property

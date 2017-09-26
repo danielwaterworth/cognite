@@ -4,12 +4,22 @@ import mxnet as mx
 class SoftmaxCrossEntropy(expr.Function):
     def forward(self, args):
         x, labels = args
+        assert(x.shape == labels.shape)
 
         def backward(gradients):
             t = mx.ndarray.softmax(x)
-            return mx.ndarray.multiply(gradients, mx.ndarray.subtract(t, labels))
+            x_gradient = mx.ndarray.multiply(gradients, mx.ndarray.subtract(t, labels))
 
-        output = mx.ndarray.softmax_cross_entropy(x, labels)
+            # FIXME:
+            label_gradient = mx.ndarray.zeros(labels.shape)
+            return (x_gradient, label_gradient)
+
+        output = \
+            -mx.ndarray.sum(
+                mx.ndarray.multiply(labels, mx.ndarray.log_softmax(x)),
+                axis=-1,
+            )
+
         return output, backward
 
     def assert_output_shape(self, args, shape):

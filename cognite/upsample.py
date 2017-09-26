@@ -26,6 +26,7 @@ class Upsample(expr.Function):
                     pool_type = 'sum',
                     stride = (self.scale, self.scale),
                 )
+            raise Exception("FIXME, missing transpose")
         return output, backwards
 
 def upsample(values, scale):

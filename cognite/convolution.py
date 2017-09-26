@@ -63,11 +63,11 @@ class Convolution(expr.Function):
         act_shape = activations.get_shape()
         if len(act_shape) != 4:
             raise expr.ShapeError('expected activations to be 4D, DHWC')
-        batch, height, width, in_channels = activations.shape
+        batch, height, width, in_channels = activations.get_shape()
         filter_height, filter_width = self.kernel
         weight_shape = (filter_height, filter_width, in_channels, self.outputs)
         weights.assert_shape(weight_shape)
-        scale = 1/math.sqrt(self.outputs*filter_height*filter_width)
+        scale = math.sqrt(1/(in_channels*filter_height*filter_width))
         initializer = \
             lambda : mx.nd.random_normal(scale=scale, shape=weight_shape)
         weights.set_initializer(initializer)

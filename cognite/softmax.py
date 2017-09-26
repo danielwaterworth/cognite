@@ -21,7 +21,7 @@ class Softmax(expr.Function):
         assert len(args) == 1
         x = args[0]
 
-        return x.get_shape(x)
+        return x.get_shape()
 
 softmax_fn = Softmax()
 
