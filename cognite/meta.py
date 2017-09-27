@@ -9,6 +9,7 @@ from cognite.linear import linear
 from cognite.mean import mean
 from cognite.relu import relu
 from cognite.reshape import reshape
+from cognite.sigmoid_cross_entropy import sigmoid_cross_entropy
 from cognite.softmax import softmax
 from cognite.softmax_cross_entropy import softmax_cross_entropy
 from cognite.squared_difference import squared_difference
