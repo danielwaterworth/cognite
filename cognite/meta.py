@@ -5,6 +5,7 @@ from cognite.add_biases import add_biases
 from cognite.broadcast import broadcast
 from cognite.concat import concat
 from cognite.convolution import convolution2d
+from cognite.divide import divide
 from cognite.linear import linear
 from cognite.mean import mean
 from cognite.relu import relu
@@ -15,6 +16,7 @@ from cognite.softmax import softmax
 from cognite.softmax_cross_entropy import softmax_cross_entropy
 from cognite.squared_difference import squared_difference
 from cognite.sqrt import sqrt
+from cognite.subtract import subtract
 from cognite.upsample import upsample
 from cognite import combinators
 from cognite import expr
