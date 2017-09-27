@@ -14,6 +14,7 @@ from cognite.sigmoid_cross_entropy import sigmoid_cross_entropy
 from cognite.softmax import softmax
 from cognite.softmax_cross_entropy import softmax_cross_entropy
 from cognite.squared_difference import squared_difference
+from cognite.sqrt import sqrt
 from cognite.upsample import upsample
 from cognite import combinators
 from cognite import expr
