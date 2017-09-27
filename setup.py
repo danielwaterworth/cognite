@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name = "cognite",
-    version = "0.0.3",
+    version = "0.0.4",
     author = "Daniel Waterworth",
     author_email = "daniel@manganizeme.com",
     description = "",
